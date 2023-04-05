@@ -1,73 +1,59 @@
-// script.js
+// 농약 데이터 파일 가져오기
+const url = 'https://raw.githubusercontent.com/chanyoung8282/pesticide-quiz/main/pesticide01.xlsx'; // 사용자명에는 본인의 GitHub 아이디를 입력하세요
+const workbook = XlsxPopulate.fromFileAsync(url).then(workbook => {
+  // 엑셀 시트 가져오기
+  const sheet = workbook.sheet("Sheet1");
 
-const form = document.querySelector('form');
-const choices = Array.from(document.querySelectorAll('.choice input[type="radio"]'));
-const answerContainer = document.querySelector('.answer');
-const btn = document.querySelector('.btn');
+  // 퀴즈 시작
+  function startQuiz() {
+    // 문제 수 입력 받기
+    let numQuestions = parseInt(prompt("몇 문제를 풀까요? (10~100, 10의 배수)", "10"));
 
-let currentQuestion = 0;
-let score = 0;
+    // 유효성 검사
+    if (isNaN(numQuestions) || numQuestions < 10 || numQuestions > 100 || numQuestions % 10 !== 0) {
+      alert("입력한 값이 유효하지 않습니다. 10~100 중 10의 배수로 다시 입력해주세요.");
+      startQuiz();
+      return;
+    }
 
-const showQuestion = (question) => {
-  document.querySelector('.question').textContent = question['문제'];
-  const choiceLabels = Array.from(document.querySelectorAll('.choice label'));
-  choiceLabels.forEach((label, index) => {
-    label.textContent = question[`선택지${index+1}`];
-  });
-}
+    // 문제 출제
+    const questions = [];
+    while (questions.length < numQuestions) {
+      const rowNumber = Math.floor(Math.random() * (sheet.usedRange().bottomRightCell().rowNumber() - 1)) + 2;
+      const pesticide = sheet.row(rowNumber).cell("A").value().toString();
+      const category = sheet.row(rowNumber).cell("B").value().toString();
+      const choices = ["제초제", "살충제", "살균제"];
+      const index = Math.floor(Math.random() * 3);
+      const correctChoice = choices[index];
+      const wrongChoices = choices.filter((_, i) => i !== index);
+      questions.push({
+        question: `${pesticide}은(는) ${correctChoice}입니다.`,
+        choices: shuffleArray([correctChoice, wrongChoices[0], wrongChoices[1]])
+      });
+    }
 
-const showAnswer = (isCorrect, correctAnswer) => {
-  answerContainer.innerHTML = '';
-  const p = document.createElement('p');
-  p.textContent = isCorrect ? '정답입니다!' : `틀렸습니다. 정답은 ${correctAnswer}입니다.`;
-  p.classList.add(isCorrect ? 'correct' : 'incorrect');
-  answerContainer.appendChild(p);
-}
+    // 퀴즈 풀이
+    let score = 0;
+    for (let i = 0; i < questions.length; i++) {
+      const answer = prompt(`${i + 1}. ${questions[i].question}\n\n1. ${questions[i].choices[0]}\n2. ${questions[i].choices[1]}\n3. ${questions[i].choices[2]}`);
+      if (answer === null) {
+        alert("퀴즈를 종료합니다.");
+        return;
+      }
+      const choice = parseInt(answer);
+      if (isNaN(choice) || choice < 1 || choice > 3) {
+        alert("입력한 값이 유효하지 않습니다. 1~3 사이의 값을 입력해주세요.");
+        i--;
+        continue;
+      }
+      if (questions[i].choices[choice - 1] === questions[i].choices[0]) {
+        score++;
+      }
+    }
 
-const handleChoiceChange = () => {
-  const checkedChoice = choices.find(choice => choice.checked);
-  if (!checkedChoice) {
-    btn.disabled = true;
-    return;
+    // 결과 출력
+    alert(`퀴즈를 모두 풀었습니다!\n당신의 점수는 ${score}/${numQuestions}입니다.`);
   }
-  btn.disabled = false;
-}
 
-const handleFormSubmit = (event) => {
-  event.preventDefault();
-  const checkedChoice = choices.find(choice => choice.checked);
-  const answer = checkedChoice.value;
-  const question = questions[currentQuestion];
-  const isCorrect = answer === question['정답'];
-  if (isCorrect) {
-    score++;
-  }
-  showAnswer(isCorrect, question['정답']);
-  btn.textContent = currentQuestion === questions.length - 1 ? '결과 보기' : '다음 문제';
-}
+ 
 
-const handleBtnClick = () => {
-  if (currentQuestion === questions.length - 1) {
-    const totalScore = Math.round(score / questions.length * 100);
-    const message = `총점: ${score} / ${questions.length}\n백분율 점수: ${totalScore}점`;
-    alert(message);
-    return;
-  }
-  currentQuestion++;
-  showQuestion(questions[currentQuestion]);
-  answerContainer.innerHTML = '';
-  btn.disabled = true;
-  btn.textContent = '제출';
-}
-
-choices.forEach(choice => choice.addEventListener('change', handleChoiceChange));
-form.addEventListener('submit', handleFormSubmit);
-btn.addEventListener('click', handleBtnClick);
-
-let questions = [];
-
-fetch('questions.json')
-  .then(response => response.json())
-  .then(data => {
-    questions = data;
-   
