@@ -55,5 +55,88 @@ const workbook = XlsxPopulate.fromFileAsync(url).then(workbook => {
     alert(`퀴즈를 모두 풀었습니다!\n당신의 점수는 ${score}/${numQuestions}입니다.`);
   }
 
- 
+ // 농약 퀴즈 데이터 로드
+async function loadQuizData() {
+  const response = await fetch("pesticide01.csv");
+  const csvText = await response.text();
+  const data = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+  return data.data;
+}
+
+// 중복을 허용하지 않고 무작위로 정해진 개수의 인덱스를 반환하는 함수
+function generateRandomIndexes(length, count) {
+  const indexes = new Set();
+  while (indexes.size < count) {
+    const randomIndex = Math.floor(Math.random() * length);
+    indexes.add(randomIndex);
+  }
+  return Array.from(indexes);
+}
+
+// 퀴즈 데이터에서 지정된 개수만큼 무작위로 문제를 선택하는 함수
+async function selectQuizQuestions(count) {
+  const quizData = await loadQuizData();
+  const indexes = generateRandomIndexes(quizData.length, count);
+  const questions = indexes.map((index) => quizData[index]);
+  return questions;
+}
+
+// 퀴즈 폼을 생성하는 함수
+function createQuizForm(questions) {
+  const form = document.createElement("form");
+  questions.forEach((question, index) => {
+    const questionText = question["농약명칭"];
+    const answerOptions = [
+      question["제초제"],
+      question["살충제"],
+      question["살균제"],
+    ];
+    const randomOptions = answerOptions.sort(() => Math.random() - 0.5);
+    const fieldset = document.createElement("fieldset");
+    const legend = document.createElement("legend");
+    legend.innerText = `문제 ${index + 1}: ${questionText}`;
+    fieldset.appendChild(legend);
+    randomOptions.forEach((option) => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = `question-${index}`;
+      input.value = option;
+      label.appendChild(input);
+      label.append(` ${option}`);
+      fieldset.appendChild(label);
+    });
+    form.appendChild(fieldset);
+  });
+  const submitButton = document.createElement("button");
+  submitButton.type = "submit";
+  submitButton.innerText = "제출";
+  form.appendChild(submitButton);
+  return form;
+}
+
+// 퀴즈 결과를 생성하는 함수
+function createQuizResults(questions, answers) {
+  let correctCount = 0;
+  const results = document.createElement("div");
+  results.classList.add("results");
+  questions.forEach((question, index) => {
+    const isCorrect = question["분류"] === answers[index];
+    const result = document.createElement("div");
+    result.classList.add("result");
+    result.classList.add(isCorrect ? "correct" : "incorrect");
+    const resultText = isCorrect ? "정답" : "오답";
+    result.innerHTML = `<strong>문제 ${index + 1}</strong>: ${question["농약명칭"]} (${resultText})`;
+    results.appendChild(result);
+    if (isCorrect) {
+      correctCount++;
+    }
+  });
+  const resultText = `${questions.length}문제 중 ${correctCount}문제를 맞추셨습니다.`;
+  const score = document.createElement("p");
+  score.innerText = resultText;
+  results.insertBefore(score, results.firstChild);
+  return results;
+}
+
 
