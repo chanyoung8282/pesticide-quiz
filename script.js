@@ -5,9 +5,15 @@ const workbook = XlsxPopulate.fromFileAsync(url).then(workbook => {
   const sheet = workbook.sheet("Sheet1");
 
   // 퀴즈 시작
-  function startQuiz() {
-    // 문제 수 입력 받기
-    let numQuestions = parseInt(prompt("몇 문제를 풀까요? (10~100, 10의 배수)", "10"));
+ function startQuiz() {
+  var questionCount = parseInt(document.getElementById("question-count").value);
+  if (questionCount < 10 || questionCount > 100 || questionCount % 10 !== 0) {
+    alert("문제 개수는 10에서 100 사이의 10의 배수로 입력해주세요.");
+    return;
+  }
+  var quiz = generateQuiz(pesticideData, questionCount);
+  displayQuiz(quiz);
+}
 
     // 유효성 검사
     if (isNaN(numQuestions) || numQuestions < 10 || numQuestions > 100 || numQuestions % 10 !== 0) {
