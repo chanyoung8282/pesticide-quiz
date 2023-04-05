@@ -1,12 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Page Title</title>
-    <link rel="stylesheet" href="style.css">
+    <title>농약 퀴즈</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
   </head>
   <body>
-    <h1>This is a Heading</h1>
-    <p>This is a paragraph.</p>
+    <div class="container">
+      <h1>농약 퀴즈</h1>
+      <form>
+        <label for="question-count">문제 개수:</label>
+        <select id="question-count" name="question-count">
+          <option value="10">10개</option>
+          <option value="20">20개</option>
+          <option value="30">30개</option>
+        </select>
+        <button type="button" onclick="startQuiz()">퀴즈 시작</button>
+      </form>
+      <div id="quiz" style="display:none;"></div>
+      <div id="results" style="display:none;"></div>
+    </div>
     <script src="script.js"></script>
   </body>
 </html>
+
